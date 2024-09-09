@@ -1,5 +1,14 @@
 package salesfileprocessor;
 
+import java.io.FileWriter;
+//import java.io.FileReader;
+//import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
+
+
 public class GenerateInfoFiles {
 
 	/**
@@ -46,5 +55,42 @@ public class GenerateInfoFiles {
 	
 	public static void main(String[] args) {
 	    
+	}
+	
+	/**
+	 * Generates a product file with sequential product IDs and random prices.
+	 * The file is named "products.txt".
+	 * 
+	 * @param productsCount the number of products to generate in the file
+	 */
+	public void createProductsFile(int productsCount) {
+	    // File name for the products data
+		String folderName = "output";
+	    String fileName = folderName + "/products.txt";
+	    Random random = new Random();  // Random object to generate random prices
+	    
+	    // Create folder if it doesn't exist
+	    File folder = new File(folderName);
+	    if (!folder.exists()) {
+	        folder.mkdirs();
+	    }
+
+	    try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+	        // Generate and write product information
+	        for (int i = 1; i <= productsCount; i++) {
+	            int productId = i;  // Sequential product ID
+	            String productName = "Product" + i;  // Product name
+	            int price = (random.nextInt(91) + 10) * 1000;  // Random price between 10000 and 100000
+
+	            // Write product information to the file
+	            writer.write(productId + ";" + productName + ";" + price);
+	            writer.newLine();
+	        }
+
+	        System.out.println("Product file generated: " + fileName);
+	    } catch (IOException e) {
+	        // Handle file writing errors
+	        System.err.println("Error generating product file: " + e.getMessage());
+	    }
 	}
 }
