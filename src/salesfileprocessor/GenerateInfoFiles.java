@@ -146,7 +146,27 @@ public class GenerateInfoFiles {
 		return salesmen; // Return the list of generated salesmen
 	}
 
+	/**
+	 * Main method to generate salesmen information and sales files for each
+	 * salesman.
+	 * 
+	 * @param args command line arguments (not used)
+	 */
 	public static void main(String[] args) {
+		// Create an instance of GenerateInfoFiles to generate files
+		GenerateInfoFiles generator = new GenerateInfoFiles();
 
+		// Generate test files with sample data
+		generator.createProductsFile(10); // Generates a file with 10 products
+
+		// Generate salesmen information and retrieve the list of salesmen
+		List<String[]> salesmen = generator.createSalesMenInfoFile(5); // Generates 5 salesmen
+
+		// For each salesman, generate a corresponding sales file
+		for (String[] salesman : salesmen) {
+			String name = salesman[0]; // Full name of the salesman
+			long id = Long.parseLong(salesman[1]); // Document number of the salesman
+			generator.createSalesManFile(5, name, id); // Generate a sales file with 5 random sales
+		}
 	}
 }
