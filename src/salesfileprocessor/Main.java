@@ -1,10 +1,16 @@
 package salesfileprocessor;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Main {
 
@@ -42,6 +48,38 @@ public class Main {
         }
 
         return salesmenInfo;
+    }
+
+     /**
+     * Generates the sales report from the individual sales files.
+     *
+     * @param salesReportPath the path to the sales report file
+     * @param salesmenInfo    the map of salesman name to document number
+     */
+    private void generateSalesReport(String salesReportPath, Map<String, String> salesmenInfo) {
+        Map<String, Double> salesReport = new HashMap<>();
+
+        // Process each sales file and update the sales report
+        File salesFolder = new File("output");
+        for (File salesFile : salesFolder.listFiles((dir, name) -> name.startsWith("sales_"))) {
+            // TODO: process Sales File method
+        }
+
+        // Sort the sales report by total sales in descending order
+        List<Map.Entry<String, Double>> sortedSalesReport = new ArrayList<>(salesReport.entrySet());
+        Collections.sort(sortedSalesReport, (a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        // Write the sales report to the output file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(salesReportPath))) {
+            for (Map.Entry<String, Double> entry : sortedSalesReport) {
+                String salesmanName = entry.getKey();
+                double totalSales = entry.getValue();
+                writer.write(salesmanName + ";" + totalSales);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error generating sales report: " + e.getMessage());
+        }
     }
 
     
