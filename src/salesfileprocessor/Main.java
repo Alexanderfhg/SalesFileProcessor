@@ -62,7 +62,7 @@ public class Main {
         // Process each sales file and update the sales report
         File salesFolder = new File("output");
         for (File salesFile : salesFolder.listFiles((dir, name) -> name.startsWith("sales_"))) {
-            // TODO: process Sales File method
+            processSalesFile(salesFile, salesmenInfo, salesReport);
         }
 
         // Sort the sales report by total sales in descending order
@@ -79,6 +79,47 @@ public class Main {
             }
         } catch (IOException e) {
             System.err.println("Error generating sales report: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Processes a single sales file and updates the sales report.
+     *
+     * @param salesFile      the sales file to process
+     * @param salesmenInfo   the map of salesman name to document number
+     * @param salesReport    the map to store the sales report
+     */
+    private void processSalesFile(File salesFile, Map<String, String> salesmenInfo, Map<String, Double> salesReport) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(salesFile))) {
+            String line = reader.readLine(); // Read the salesman's document type and number
+            String[] parts = line.split(";");
+            String documentType = parts[0];
+            String documentNumber = parts[1];
+
+            // Find the salesman's name based on the document number
+            String salesmanName = null;
+            for (Map.Entry<String, String> entry : salesmenInfo.entrySet()) {
+                if (entry.getValue().equals(documentNumber)) {
+                    salesmanName = entry.getKey();
+                    break;
+                }
+            }
+
+            if (salesmanName != null) {
+                double totalSales = 0.0;
+                while ((line = reader.readLine()) != null) {
+                    parts = line.split(";");
+                    int productId = Integer.parseInt(parts[0]);
+                    int quantity = Integer.parseInt(parts[1]);
+                    // TODO: Fetch product price and calculate total sales
+                    totalSales += quantity; // Temporary calculation, replace with actual total sales
+                }
+                salesReport.put(salesmanName, totalSales);
+            } else {
+                System.err.println("Salesman not found for document number: " + documentNumber);
+            }
+        } catch (IOException e) {
+            System.err.println("Error processing sales file: " + salesFile.getName() + " - " + e.getMessage());
         }
     }
 
