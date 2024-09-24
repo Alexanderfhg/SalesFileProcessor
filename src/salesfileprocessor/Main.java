@@ -123,6 +123,48 @@ public class Main {
         }
     }
 
+    /**
+     * Generates the product report from the product information file.
+     *
+     * @param productReportPath the path to the product report file
+     */
+    private void generateProductReport(String productReportPath) {
+        Map<Integer, String[]> productInfo = new HashMap<>();
+
+        // Load product information from the product file
+        try (BufferedReader reader = new BufferedReader(new FileReader("output/products.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                int productId = Integer.parseInt(parts[0]);
+                String productName = parts[1];
+                int price = Integer.parseInt(parts[2]);
+                productInfo.put(productId, new String[] { productName, String.valueOf(price) });
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading product information: " + e.getMessage());
+        }
+
+        // Sort the product information by total sales in descending order
+        List<Map.Entry<Integer, String[]>> sortedProducts = new ArrayList<>(productInfo.entrySet());
+        sortedProducts.sort((a, b) -> {
+            // TODO: Sort by total sales instead of product ID
+            return Integer.compare(b.getKey(), a.getKey());
+        });
+
+        // Write the product report to the output file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(productReportPath))) {
+            for (Map.Entry<Integer, String[]> entry : sortedProducts) {
+                int productId = entry.getKey();
+                String productName = entry.getValue()[0];
+                String price = entry.getValue()[1];
+                writer.write(productName + ";" + price);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error generating product report: " + e.getMessage());
+        }
+    }
     
 
     public static void main(String[] args) {
