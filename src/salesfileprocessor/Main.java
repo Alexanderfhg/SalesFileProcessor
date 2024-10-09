@@ -9,166 +9,219 @@ import java.util.HashMap;
 import java.util.Map;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+/**
+ * Main class responsible for processing sales files and generating reports.
+ * It handles product loading, sales file processing, and report generation.
+ */
 public class Main {
 
-    /**
-     * Processes the sales files for all salesmen and generates the sales report and product report.
-     */
-    public void processSalesFiles() {
-    	// Load salesman information from the salesmen file
-        Map<String, String> salesmenInfo = loadSalesmenInfo("output/salesmen.txt");
-    }
+    // Stores product details: productId mapped to a String array [name, price]
+    private Map<Integer, String[]> products = new HashMap<>();
     
-    /**
-     * Loads the salesman information from the salesmen file.
-     *
-     * @param salesmenFilePath the path to the salesmen information file
-     * @return a map of salesman name to document number
-     */
-    private Map<String, String> loadSalesmenInfo(String salesmenFilePath) {
-        Map<String, String> salesmenInfo = new HashMap<>();
+    // Stores the count of sales per product: productId mapped to number of sales
+    private Map<Integer, Integer> productSales = new HashMap<>();
+    
+    // Stores the total sales made by each salesman: salesman name mapped to total sales amount
+    private Map<String, Double> salesmenSales = new HashMap<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(salesmenFilePath))) {
+    /**
+     * Generates reports for both products and salesmen.
+     * It first loads the product data, processes the sales files, and then writes the reports.
+     * 
+     * @param productReportPath Path where the product report will be written.
+     * @param salesmanReportPath Path where the salesman report will be written.
+     */
+    public void generateReports(String productReportPath, String salesmanReportPath) {
+        loadProducts("output/products.txt");
+        processSalesFiles("output");
+        writeProductReport(productReportPath);
+        writeSalesmanReport(salesmanReportPath);
+    }
+
+    /**
+     * Loads product information from a given file and initializes the productSales map.
+     * The product file is expected to have the format: productId;productName;price.
+     * 
+     * @param productsFilePath Path to the file containing the product data.
+     */
+    private void loadProducts(String productsFilePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(productsFilePath))) {
             String line;
+            // Reads each line of the product file
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(";");
-                String documentType = parts[0];
-                String documentNumber = parts[1];
-                String firstName = parts[2];
-                String lastName = parts[3];
-
-                String salesmanName = firstName + " " + lastName;
-                salesmenInfo.put(salesmanName, documentNumber);
-            }
-        } catch (IOException e) {
-            System.err.println("Error loading salesman information: " + e.getMessage());
-        }
-
-        return salesmenInfo;
-    }
-
-     /**
-     * Generates the sales report from the individual sales files.
-     *
-     * @param salesReportPath the path to the sales report file
-     * @param salesmenInfo    the map of salesman name to document number
-     */
-    private void generateSalesReport(String salesReportPath, Map<String, String> salesmenInfo) {
-        Map<String, Double> salesReport = new HashMap<>();
-
-        // Process each sales file and update the sales report
-        File salesFolder = new File("output");
-        for (File salesFile : salesFolder.listFiles((dir, name) -> name.startsWith("sales_"))) {
-            processSalesFile(salesFile, salesmenInfo, salesReport);
-        }
-
-        // Sort the sales report by total sales in descending order
-        List<Map.Entry<String, Double>> sortedSalesReport = new ArrayList<>(salesReport.entrySet());
-        Collections.sort(sortedSalesReport, (a, b) -> Double.compare(b.getValue(), a.getValue()));
-
-        // Write the sales report to the output file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(salesReportPath))) {
-            for (Map.Entry<String, Double> entry : sortedSalesReport) {
-                String salesmanName = entry.getKey();
-                double totalSales = entry.getValue();
-                writer.write(salesmanName + ";" + totalSales);
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.err.println("Error generating sales report: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Processes a single sales file and updates the sales report.
-     *
-     * @param salesFile      the sales file to process
-     * @param salesmenInfo   the map of salesman name to document number
-     * @param salesReport    the map to store the sales report
-     */
-    private void processSalesFile(File salesFile, Map<String, String> salesmenInfo, Map<String, Double> salesReport) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(salesFile))) {
-            String line = reader.readLine(); // Read the salesman's document type and number
-            String[] parts = line.split(";");
-            String documentType = parts[0];
-            String documentNumber = parts[1];
-
-            // Find the salesman's name based on the document number
-            String salesmanName = null;
-            for (Map.Entry<String, String> entry : salesmenInfo.entrySet()) {
-                if (entry.getValue().equals(documentNumber)) {
-                    salesmanName = entry.getKey();
-                    break;
-                }
-            }
-
-            if (salesmanName != null) {
-                double totalSales = 0.0;
-                while ((line = reader.readLine()) != null) {
-                    parts = line.split(";");
-                    int productId = Integer.parseInt(parts[0]);
-                    int quantity = Integer.parseInt(parts[1]);
-                    // TODO: Fetch product price and calculate total sales
-                    totalSales += quantity; // Temporary calculation, replace with actual total sales
-                }
-                salesReport.put(salesmanName, totalSales);
-            } else {
-                System.err.println("Salesman not found for document number: " + documentNumber);
-            }
-        } catch (IOException e) {
-            System.err.println("Error processing sales file: " + salesFile.getName() + " - " + e.getMessage());
-        }
-    }
-
-    /**
-     * Generates the product report from the product information file.
-     *
-     * @param productReportPath the path to the product report file
-     */
-    private void generateProductReport(String productReportPath) {
-        Map<Integer, String[]> productInfo = new HashMap<>();
-
-        // Load product information from the product file
-        try (BufferedReader reader = new BufferedReader(new FileReader("output/products.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
+                // Splits the line into productId, productName, and price
                 String[] parts = line.split(";");
                 int productId = Integer.parseInt(parts[0]);
                 String productName = parts[1];
-                int price = Integer.parseInt(parts[2]);
-                productInfo.put(productId, new String[] { productName, String.valueOf(price) });
+                String price = parts[2];
+                // Stores the product details in the products map
+                products.put(productId, new String[]{productName, price});
+                // Initializes the sales count for this product to 0
+                productSales.put(productId, 0);
             }
         } catch (IOException e) {
-            System.err.println("Error loading product information: " + e.getMessage());
+            // Logs any IO errors encountered while reading the product file
+            System.err.println("Error loading products: " + e.getMessage());
         }
+    }
 
-        // Sort the product information by total sales in descending order
-        List<Map.Entry<Integer, String[]>> sortedProducts = new ArrayList<>(productInfo.entrySet());
-        sortedProducts.sort((a, b) -> {
-            // TODO: Sort by total sales instead of product ID
-            return Integer.compare(b.getKey(), a.getKey());
-        });
+    /**
+     * Processes all sales files in a specified folder. The method expects files
+     * to be named with the pattern 'sales_*.txt'.
+     * 
+     * @param salesFolderPath Path to the folder containing sales files.
+     */
+    private void processSalesFiles(String salesFolderPath) {
+        File folder = new File(salesFolderPath);
+        // Filters files starting with 'sales_' and ending with '.txt'
+        File[] salesFiles = folder.listFiles((dir, name) -> name.startsWith("sales_") && name.endsWith(".txt"));
 
-        // Write the product report to the output file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(productReportPath))) {
-            for (Map.Entry<Integer, String[]> entry : sortedProducts) {
+        // Checks if sales files were found in the folder
+        if (salesFiles != null) {
+            // Processes each sales file found
+            for (File file : salesFiles) {
+                processSalesFile(file);
+            }
+        }
+    }
+
+    /**
+     * Processes a single sales file. Each sales file contains sales data
+     * for one salesman. The first line contains salesman information, and
+     * subsequent lines contain product sales data in the format: productId;quantity.
+     * 
+     * @param salesFile The sales file to be processed.
+     */
+    private void processSalesFile(File salesFile) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(salesFile))) {
+            // Read the first line containing general salesman information
+            String salesmanInfo = reader.readLine(); 
+            
+            // Extract the salesman's name from the file name
+            String salesmanName = extractSalesmanName(salesFile.getName());
+            double salesmanTotal = 0.0; // Tracks the total sales amount for this salesman
+
+            String line;
+            // Process each line containing productId and quantity
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                int productId = Integer.parseInt(parts[0]);
+                int quantity = Integer.parseInt(parts[1]);
+
+                // Update product sales count with the quantity sold
+                productSales.put(productId, productSales.get(productId) + quantity);
+
+                // Calculate the sales for the product and add to salesman's total
+                int price = Integer.parseInt(products.get(productId)[1]);
+                salesmanTotal += price * quantity;
+            }
+
+            // Record the total sales for this salesman
+            salesmenSales.put(salesmanName, salesmanTotal);
+        } catch (IOException e) {
+            // Log any errors encountered while processing the sales file
+            System.err.println("Error processing sales file " + salesFile.getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Extracts the salesman's name from the sales file name.
+     * The file name format is expected to be sales_firstname_lastname.txt,
+     * and this method returns "firstname lastname".
+     * 
+     * @param fileName The name of the sales file (e.g., sales_john_doe.txt).
+     * @return The salesman's name in the format "Firstname Lastname".
+     */
+    private String extractSalesmanName(String fileName) {
+        // Split the file name by underscores and reconstruct the salesman's name
+        String[] parts = fileName.split("_");
+        return parts[1] + " " + parts[2];
+    }
+
+    /**
+     * Writes a product sales report to the specified output file.
+     * The report includes the product name, price, quantity sold, and total sales for each product.
+     * The products are sorted by the quantity sold in descending order.
+     * 
+     * @param outputPath The file path where the product report will be written.
+     */
+    private void writeProductReport(String outputPath) {
+        // Sort product sales by quantity sold in descending order
+        List<Map.Entry<Integer, Integer>> sortedSales = new ArrayList<>(productSales.entrySet());
+        sortedSales.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
+            // Write report header
+            writer.write("Product Name;Price;Quantity Sold;Total");
+            writer.newLine();
+
+            // Write each product's sales data
+            for (Map.Entry<Integer, Integer> entry : sortedSales) {
                 int productId = entry.getKey();
-                String productName = entry.getValue()[0];
-                String price = entry.getValue()[1];
-                writer.write(productName + ";" + price);
+                String[] productInfo = products.get(productId);
+                String productName = productInfo[0];
+                int price = Integer.parseInt(productInfo[1]);
+                int quantitySold = entry.getValue();
+                int total = price * quantitySold;
+
+                // Write product sales data in CSV format
+                writer.write(String.format("%s;%d;%d;%d", productName, price, quantitySold, total));
                 writer.newLine();
             }
         } catch (IOException e) {
-            System.err.println("Error generating product report: " + e.getMessage());
+            // Log any errors encountered while writing the product report
+            System.err.println("Error writing product report: " + e.getMessage());
         }
     }
-    
 
+    /**
+     * Writes a salesman sales report to the specified output file.
+     * The report includes the salesman's name and the total sales amount.
+     * The salesmen are sorted by their total sales in descending order.
+     * 
+     * @param outputPath The file path where the salesman report will be written.
+     */
+    private void writeSalesmanReport(String outputPath) {
+        // Sort salesmen by total sales in descending order
+        List<Map.Entry<String, Double>> sortedSalesmen = new ArrayList<>(salesmenSales.entrySet());
+        sortedSalesmen.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
+            // Write report header
+            writer.write("Salesman Name;Total Sales");
+            writer.newLine();
+
+            // Write each salesman's total sales
+            for (Map.Entry<String, Double> entry : sortedSalesmen) {
+                String salesmanName = entry.getKey();
+                double totalSales = entry.getValue();
+
+                // Write salesman sales data in CSV format
+                writer.write(String.format("%s;%.2f", salesmanName, totalSales));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            // Log any errors encountered while writing the salesman report
+            System.err.println("Error writing salesman report: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Main method to generate product and salesman sales reports.
+     * It creates a Main instance and calls the generateReports method with the paths for both reports.
+     * 
+     * @param args Command-line arguments (not used in this implementation).
+     */
     public static void main(String[] args) {
-        Main processor = new Main();
-        processor.processSalesFiles();
+        // Create an instance of the Main class
+        Main generator = new Main();
+        
+        // Generate product and salesman reports with specified file paths
+        generator.generateReports("output/product_sales_report.csv", "output/salesman_sales_report.csv");
+        
+        // Notify that the reports have been generated successfully
+        System.out.println("Sales reports generated successfully.");
     }
 }

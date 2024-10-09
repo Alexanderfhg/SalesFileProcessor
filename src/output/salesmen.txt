@@ -1,0 +1,5 @@
+CC;1768089275;Jose;Gutierrez
+CC;1169372985;Sofia;Gutierrez
+CC;1845685111;Pedro;Perez
+CC;1052646854;Daniela;Vargas
+CC;1512345704;Paula;Rodriguez

@@ -1,0 +1,10 @@
+1;Product1;88000
+2;Product2;88000
+3;Product3;62000
+4;Product4;56000
+5;Product5;57000
+6;Product6;72000
+7;Product7;52000
+8;Product8;55000
+9;Product9;21000
+10;Product10;86000
